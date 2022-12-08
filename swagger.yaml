@@ -110,6 +110,24 @@ paths:
       security:
         - bearerAuth:
             - write:estimate
+  /intake/show/{id}:
+    get:
+      tags: [intake]
+      summary: Request information about the specified Intake
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the Intake to get
+      responses:
+        '200':
+          description: OK - Intake properties fetched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntakeShowResponse'
 components:
   schemas:
     Intake:
@@ -137,6 +155,27 @@ components:
                 - 0
                 - 1
               default: 1
+        attachments:
+          type: object
+          properties:
+            '0':
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: attachment.pdf
+                mime-type:
+                  type: string
+                  example: application/pdf
+                contents:
+                  type: string
+                  format: byte
+                  description: base64 encoded string of attachment PDF contents
+                multiplex:
+                  description: Print method - 1 for recto verso, 0 for recto
+                  type: integer
+                  enum: [0, 1]
+                  default: 1
         address:
           type: array
           items:
@@ -148,11 +187,11 @@ components:
               houseNumber:
                 type: integer
                 example: 50
-                description: Required if houseNumberAlpha is not present
+                description: Required if houseNumberAlpha is **absent**
               houseNumberAlpha:
                 type: string
                 example: '50'
-                description: Required if houseNumber is not present
+                description: Required if houseNumber is **absent**
                 default: ''
               box:
                 type: string
@@ -161,7 +200,7 @@ components:
               unstructuredStreetNumberBox:
                 type: string
                 example: '30 b'
-                description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are NOT present.
+                description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are **absent**.
                 default: ''
               countryIso2:
                 type: string
@@ -199,6 +238,56 @@ components:
                   required:
                     - fullname
                   additionalProperties: false
+        envelope:
+          type: object
+          description: Custom envelope print
+          properties:
+            name:
+              description: Original name of the envelope document, including extension
+              type: string
+              example: 'envelope.pdf'
+            mime-type:
+              description: MIME type of the envelope, currently only application/pdf is supported
+              type: string
+              example: 'application/pdf'
+            contents:
+              description: base64 encoded string of PDF contents
+              type: string
+              format: byte
+        background:
+          nullable: true
+          type: object
+          description: Custom background to be printed on first page of main document
+          properties:
+            name:
+              description: Original name of the background document, including extension
+              type: string
+              example: 'background.pdf'
+            mime-type:
+              description: MIME type of the background, currently only application/pdf is supported
+              type: string
+              example: 'application/pdf'
+            contents:
+              description: base64 encoded string of PDF contents
+              type: string
+              format: byte
+        carrier:
+          nullable: true
+          type: object
+          description: Custom address carrier to be used for C4 envelopes
+          properties:
+            name:
+              description: Original name of the carrier document, including extension
+              type: string
+              example: 'carrier.pdf'
+            mime-type:
+              description: MIME type of the carrier, currently only application/pdf is supported
+              type: string
+              example: 'application/pdf'
+            contents:
+              description: base64 encoded string of PDF contents
+              type: string
+              format: byte
         postalService:
           type: array
           items:
@@ -372,8 +461,11 @@ components:
           example: '2.03'
     IntakeMultipart:
       type: object
-      required: ['document[name]', 'document[contents]']
+      required: ['document[name]', 'document[contents]', requestType]
       properties:
+        requestType:
+          type: string
+          example: multipart
         document[name]:
           type: string
           example: maindocument.pdf
@@ -387,21 +479,43 @@ components:
         document[multiplex]:
           description: Print method - 1 for recto verso, 0 for recto
           type: integer
-          enum:
-            - 0
-            - 1
+          enum: [0, 1]
           default: 1
+        attachments[0][name]:
+          type: string
+          example: attachment_1.pdf
+        attachments[0][mime-type]:
+          type: string
+          example: application/pdf
+        attachments[0][contents]:
+          type: string
+          format: binary
+        attachments[0][multiplex]:
+          type: integer
+          enum: [0, 1]
+        address[firstname]:
+          type: string
+          example: John
+          description: Only allowed if fullname is **absent**
+        address[lastname]:
+          type: string
+          example: Doe
+          description: Only allowed if fullname is **absent**
+        address[fullname]:
+          type: string
+          example: John Doe
+          description: Only allowed if firstname **and** lastname are **absent**
         address[street]:
           type: string
           example: 'Interleuvenlaan'
         address[houseNumber]:
           type: integer
           example: 50
-          description: Required if houseNumberAlpha is not present
+          description: Required if houseNumberAlpha is **absent**
         address[houseNumberAlpha]:
           type: string
           example: '50'
-          description: Required if houseNumber is not present
+          description: Required if houseNumber is **absent**
           default: ''
         address[box]:
           type: string
@@ -410,7 +524,7 @@ components:
         address[unstructuredStreetNumberBox]:
           type: string
           example: '30 b'
-          description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are NOT present.
+          description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are **absent**.
           default: ''
         address[countryIso2]:
           type: string
@@ -427,27 +541,187 @@ components:
         address[company]:
           type: string
           example: 'Symeta Hybrid nv'
-      oneOf:
-          - type: object
-            properties:
-              address[firstname]:
-                type: string
-                example: 'John'
-              address[lastname]:
-                type: string
-                example: 'Doe'
-            required:
-              - address[firstname]
-              - address[lastname]
-            additionalProperties: false
-          - type: object
-            properties:
-              address[fullname]:
-                type: string
-                example: 'John Doe'
-            required:
-              - address[fullname]
-            additionalProperties: false
+        envelope[name]:
+          type: string
+          example: envelope.pdf
+        envelope[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the envelope, currently only application/pdf is supported
+        envelope[contents]:
+          type: string
+          format: binary
+        background[name]:
+          type: string
+          example: envelope.pdf
+        background[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the envelope, currently only application/pdf is supported
+        background[contents]:
+          type: string
+          format: binary
+        carrier[name]:
+          type: string
+          example: carrier.pdf
+        carrier[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the address carrier, currently only application/pdf is supported
+        carrier[contents]:
+          type: string
+          format: binary
+        postalService[registered]:
+          type: integer
+          enum: [0, 1]
+        postalService[prior]:
+          type: integer
+          enum: [0, 1]
+        postalService[nonPrior]:
+          type: integer
+          enum: [0, 1]
+          default: 1
+        correlation[costId]:
+          type: string
+          example: 'test'
+        correlation[lang]:
+          type: string
+          enum: ['nl', 'fr', 'en', 'de']
+        correlation[returnAddress]:
+          type: string
+          example: 'Interleuvenlaan 50, 3001 Leuven'
+          description: Will be printed on the envelope as return address in case the letter is undeliverable.
+        hook[uri]:
+          type: string
+          format: url
+          example: 'https://example.com/hooks/mailitwize'
+        hook[method]:
+          type: string
+          enum: ['GET', 'POST']
+          default: 'POST'
+    IntakeShowResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10205
+        firstname:
+          type: string
+          example: 'John'
+        lastname:
+          type: string
+          example: 'Doe'
+        fullname:
+          type: string
+          example: 'John Doe'
+        company:
+          type: string
+          example: 'Symeta Hybrid nv'
+        street:
+          type: string
+          example: 'Interleuvenlaan'
+        number:
+          type: integer
+          example: 50
+        number_alpha:
+          type: string
+          example: '50'
+          default: ''
+        box:
+          type: string
+          example: '0101'
+          default: ''
+        unstructured_street:
+          type: string
+          example: '30 b'
+          default: ''
+        zip:
+          type: string
+          example: '3001'
+        municipality:
+          type: string
+          example: 'Leuven'
+        country_iso2:
+          type: string
+          example: 'BE'
+          default: 'BE'
+          minLength: 2
+          maxLength: 2
+        cost_id:
+          type: string
+          example: 'test'
+        status:
+          type: string
+          enum: ['received', 'Processed', 'PickedUp', 'Dispatched', 'Printing', 'Shipped', 'Cancelled']
+          default: Printing
+        created_at:
+          type: string
+          example: 2022-12-07T09:41:58.067000Z
+          format: date-time
+        updated_at:
+          type: string
+          example: 2022-12-07T09:41:58.067000Z
+          format: date-time
+        mailpack:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              example: 12530
+            intake_id:
+              type: string
+              example: 10205
+            name:
+              type: string
+              example: miw2_10205_c945po9018-dd37-3411-j765-109eut7c86fd_mailpack.pdf
+            pages:
+              type: string
+              example: 2
+            envelope_type:
+              type: string
+              enum: [US, C4, C5]
+            created_at:
+              type: string
+              format: date-time
+              example: 2022-12-07 10:42:06.563
+            updated_at:
+              type: string
+              format: date-time
+              example: 2022-12-07 10:42:06.563
+        envelope:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              example: 1075
+            intake_id:
+              type: string
+              example: 10205
+            name:
+              type: string
+              example: miw2_10205_c945po9018-dd37-3411-j765-109eut7c86fd_envelope.pdf
+            original_name:
+              type: string
+              example: miw2_10205_c945po9018-dd37-3411-j765-109eut7c86fd_envelope.pdf
+            created_at:
+              type: string
+              format: date-time
+              example: 2022-12-07 10:42:06.563
+            updated_at:
+              type: string
+              format: date-time
+              example: 2022-12-07 10:42:06.563
+        shipping_barcode:
+          type: string
+          example:
+            - JJBEA2356412012365478896541
+            - 010541288500452621221234567890
+        shipping_date:
+          type: string
+          format: date
+          example: '01/10/2022'
   requestBodies:
     Intake:
       description: Intake that needs to be created
