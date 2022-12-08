@@ -5,13 +5,15 @@ info:
     Next to the Mail-IT-Wize web portal we also offer a RESTful API. This API provides an endpoint for printing and sending documents. Enveloping the letter and return mail processing is also provided.
 
     The process contains two components: receiving documents including metadata (document intake request) and consulting the previously processed data (resource request).
-  termsOfService: https://portal.mailitwize.com/terms-and-conditions
+  termsOfService: https://portal.mailitwize.be/terms-and-conditions
   contact:
-    email: support@mailitwize.com
+    email: support@mailitwize.be
   version: 1.4.0
 servers:
-  - url: https://api-test.mailitwize.com/api/v1
-  - url: https://api.mailitwize.com/api/v1
+  - url: https://api-test.mailitwize.be/api/v1
+    description: UAT server, no printing
+  - url: https://api.mailitwize.be/api/v1
+    description: PROD server
 tags:
   - name: intake
     description: Submit new intakes, get estimates or retrieve intake information
@@ -30,51 +32,111 @@ paths:
         required: true
       responses:
         '200':
-          description: Successful operation
+          description: OK - Intake processed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Intake'          
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Intake'
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Pet not found
-        '405':
-          description: Validation exception
+                $ref: '#/components/schemas/IntakeResponse'
+        '422':
+          description: Unprocessable Entity - verify request body
+        '413':
+          description: Entity Too Large - payload is too large, try using the Multipart Intake Request instead
+        '401':
+          description: Unauthorized - verify bearer token is correct and not expired
       security:
         - bearerAuth:
-            - write:pets
-            - read:pets
+            - write:intakes
+            - read:intakes
+  /intake/estimate:
+    post:
+      tags:
+        - intake
+      summary: Request a cost estimation for an Intake with the provided details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Intake'
+      responses:
+        '202':
+          description: OK - Estimate calculated and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntakeEstimateResponse'
+        '422':
+          description: Unprocessable Entity - verify request body
+      security:
+        - bearerAuth:
+            - write:estimate
+  /intake/multipart:
+    post:
+      tags: [intake]
+      summary: Create a new multipart intake
+      description: Create a new multipart intake via form-data request
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IntakeMultipart'
+      responses:
+        '200':
+          description: OK - multipart intake created
+      security:
+        - bearerAuth:
+            - write:intakes
+            - read:intakes
+  /intake/estimate/multipart:
+    post:
+      tags: [intake]
+      summary: Request a cost estimation for a Multipart Intake with the provided details
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IntakeMultipart'
+      responses:
+        '202':
+          description: OK - Estimate calculated and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntakeEstimateResponse'
+        '422':
+          description: Unprocessable Entity - verify request body
+      security:
+        - bearerAuth:
+            - write:estimate
 components:
   schemas:
     Intake:
       type: object
       properties:
         document:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                example: 'maindocument.pdf'
-              mime-type:
-                type: string
-                example: 'application/pdf'
-              contents:
-                type: string
-                format: byte
-                example: JVBERi0xLjUKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURlY29kZT4+CnN0cmVhbQp4nDPQM1Qo5ypUMFAw0DMwslAwtTTVMzI3VbAwMdSzMDNUKErlCtdSyOMKVAAAtxIIrgplbmRzdHJlYW0KZW5kb2JqCgozIDAgb2JqCjUwCmVuZG9iagoKNSAwIG9iago8PAo+PgplbmRvYmoKCjYgMCBvYmoKPDwvRm9udCA1IDAgUgovUHJvY1NldFsvUERGL1RleHRdCj4+CmVuZG9iagoKMSAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDQgMCBSL1Jlc291cmNlcyA2IDAgUi9NZWRpYUJveFswIDAgNTk1LjMwMzkzNzAwNzg3NCA4NDEuODg5NzYzNzc5NTI4XS9Hcm91cDw8L1MvVHJhbnNwYXJlbmN5L0NTL0RldmljZVJHQi9JIHRydWU+Pi9Db250ZW50cyAyIDAgUj4+CmVuZG9iagoKNCAwIG9iago8PC9UeXBlL1BhZ2VzCi9SZXNvdXJjZXMgNiAwIFIKL01lZGlhQm94WyAwIDAgNTk1IDg0MSBdCi9LaWRzWyAxIDAgUiBdCi9Db3VudCAxPj4KZW5kb2JqCgo3IDAgb2JqCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyA0IDAgUgovT3BlbkFjdGlvblsxIDAgUiAvWFlaIG51bGwgbnVsbCAwXQovTGFuZyhubC1CRSkKPj4KZW5kb2JqCgo4IDAgb2JqCjw8L0NyZWF0b3I8RkVGRjAwNTcwMDcyMDA2OTAwNzQwMDY1MDA3Mj4KL1Byb2R1Y2VyPEZFRkYwMDRDMDA2OTAwNjIwMDcyMDA2NTAwNEYwMDY2MDA2NjAwNjkwMDYzMDA2NTAwMjAwMDM2MDAyRTAwMzM+Ci9DcmVhdGlvbkRhdGUoRDoyMDE5MTEyNTE3MjA0MSswMScwMCcpPj4KZW5kb2JqCgp4cmVmCjAgOQowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAyMzQgMDAwMDAgbiAKMDAwMDAwMDAxOSAwMDAwMCBuIAowMDAwMDAwMTQwIDAwMDAwIG4gCjAwMDAwMDA0MDIgMDAwMDAgbiAKMDAwMDAwMDE1OSAwMDAwMCBuIAowMDAwMDAwMTgxIDAwMDAwIG4gCjAwMDAwMDA1MDAgMDAwMDAgbiAKMDAwMDAwMDU5NiAwMDAwMCBuIAp0cmFpbGVyCjw8L1NpemUgOS9Sb290IDcgMCBSCi9JbmZvIDggMCBSCi9JRCBbIDw0QkUwOTAxQzI4MkQ2MzA5RkZCM0MxQTUyQTExQzQ0RD4KPDRCRTA5MDFDMjgyRDYzMDlGRkIzQzFBNTJBMTFDNDREPiBdCi9Eb2NDaGVja3N1bSAvNDlFRTFCRUI2QTBDODU3QkIxNTIxN0U2RTRCREI0MUQKPj4Kc3RhcnR4cmVmCjc3MAolJUVPRgo=
-              multiplex:
-                description: Print method - 1 for recto verso, 0 for recto
-                type: integer
-                enum:
-                  - 0
-                  - 1
-                default: 1
+          type: object
+          properties:
+            name:
+              type: string
+              example: 'maindocument.pdf'
+            mime-type:
+              description: MIME type of the document, currently only application/pdf is supported
+              type: string
+              example: 'application/pdf'
+            contents:
+              description: base64 encoded string of PDF contents
+              type: string
+              format: byte
+              example: JVBERi0xLjUKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURlY29kZT4+CnN0cmVhbQp4nDPQM1Qo5ypUMFAw0DMwslAwtTTVMzI3VbAwMdSzMDNUKErlCtdSyOMKVAAAtxIIrgplbmRzdHJlYW0KZW5kb2JqCgozIDAgb2JqCjUwCmVuZG9iagoKNSAwIG9iago8PAo+PgplbmRvYmoKCjYgMCBvYmoKPDwvRm9udCA1IDAgUgovUHJvY1NldFsvUERGL1RleHRdCj4+CmVuZG9iagoKMSAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDQgMCBSL1Jlc291cmNlcyA2IDAgUi9NZWRpYUJveFswIDAgNTk1LjMwMzkzNzAwNzg3NCA4NDEuODg5NzYzNzc5NTI4XS9Hcm91cDw8L1MvVHJhbnNwYXJlbmN5L0NTL0RldmljZVJHQi9JIHRydWU+Pi9Db250ZW50cyAyIDAgUj4+CmVuZG9iagoKNCAwIG9iago8PC9UeXBlL1BhZ2VzCi9SZXNvdXJjZXMgNiAwIFIKL01lZGlhQm94WyAwIDAgNTk1IDg0MSBdCi9LaWRzWyAxIDAgUiBdCi9Db3VudCAxPj4KZW5kb2JqCgo3IDAgb2JqCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyA0IDAgUgovT3BlbkFjdGlvblsxIDAgUiAvWFlaIG51bGwgbnVsbCAwXQovTGFuZyhubC1CRSkKPj4KZW5kb2JqCgo4IDAgb2JqCjw8L0NyZWF0b3I8RkVGRjAwNTcwMDcyMDA2OTAwNzQwMDY1MDA3Mj4KL1Byb2R1Y2VyPEZFRkYwMDRDMDA2OTAwNjIwMDcyMDA2NTAwNEYwMDY2MDA2NjAwNjkwMDYzMDA2NTAwMjAwMDM2MDAyRTAwMzM+Ci9DcmVhdGlvbkRhdGUoRDoyMDE5MTEyNTE3MjA0MSswMScwMCcpPj4KZW5kb2JqCgp4cmVmCjAgOQowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAyMzQgMDAwMDAgbiAKMDAwMDAwMDAxOSAwMDAwMCBuIAowMDAwMDAwMTQwIDAwMDAwIG4gCjAwMDAwMDA0MDIgMDAwMDAgbiAKMDAwMDAwMDE1OSAwMDAwMCBuIAowMDAwMDAwMTgxIDAwMDAwIG4gCjAwMDAwMDA1MDAgMDAwMDAgbiAKMDAwMDAwMDU5NiAwMDAwMCBuIAp0cmFpbGVyCjw8L1NpemUgOS9Sb290IDcgMCBSCi9JbmZvIDggMCBSCi9JRCBbIDw0QkUwOTAxQzI4MkQ2MzA5RkZCM0MxQTUyQTExQzQ0RD4KPDRCRTA5MDFDMjgyRDYzMDlGRkIzQzFBNTJBMTFDNDREPiBdCi9Eb2NDaGVja3N1bSAvNDlFRTFCRUI2QTBDODU3QkIxNTIxN0U2RTRCREI0MUQKPj4Kc3RhcnR4cmVmCjc3MAolJUVPRgo=
+            multiplex:
+              description: Print method - 1 for recto verso, 0 for recto
+              type: integer
+              enum:
+                - 0
+                - 1
+              default: 1
         address:
           type: array
           items:
@@ -82,7 +144,31 @@ components:
             properties:
               street:
                 type: string
-                example: 'Interleuvenlaan 50'
+                example: 'Interleuvenlaan'
+              houseNumber:
+                type: integer
+                example: 50
+                description: Required if houseNumberAlpha is not present
+              houseNumberAlpha:
+                type: string
+                example: '50'
+                description: Required if houseNumber is not present
+                default: ''
+              box:
+                type: string
+                example: '0101'
+                default: ''
+              unstructuredStreetNumberBox:
+                type: string
+                example: '30 b'
+                description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are NOT present.
+                default: ''
+              countryIso2:
+                type: string
+                example: 'BE'
+                default: 'BE'
+                minLength: 2
+                maxLength: 2
               zip:
                 type: string
                 example: '3001'
@@ -144,7 +230,7 @@ components:
               returnAddress:
                 type: string
                 example: 'Interleuvenlaan 50, 3001 Leuven'
-                description: Will be printed on the envelope as return address in case the letter is undeliverable
+                description: Will be printed on the envelope as return address in case the letter is undeliverable.
         hook:
           type: array
           items:
@@ -158,6 +244,210 @@ components:
                 type: string
                 enum: ['GET', 'POST']
                 default: 'POST'
+    IntakeResponse:
+      type: object
+      properties:
+        intake:
+          type: integer
+          example: 10205
+        cost:
+          type: string
+          example: '2.03'
+        pricing:
+          type: object
+          properties:
+            recto_pages:
+              type: integer
+              example: 1
+            verso_pages:
+              type: integer
+              example: 0
+            total_pages:
+              type: integer
+              example: 1
+            total_sheets:
+              type: integer
+              example: 1
+            envelope_type:
+              type: string
+              enum: ['US', 'C4', 'C5']
+            recto_cost:
+              type: number
+              format: float
+              example: 0.01
+            verso_cost:
+              type: number
+              format: float
+              example: 0
+            print_cost:
+              type: number
+              format: float
+              example: 0.01
+            envelope_cost:
+              type: number
+              format: float
+              example: 0.05
+            address_carrier_cost:
+              type: number
+              format: float
+              example: 0.01
+            send_cost:
+              type: number
+              format: float
+              example: 1.93
+            prior_cost:
+              type: number
+              format: float
+              example: 0
+            registered_cost:
+              type: number
+              format: float
+              example: 0
+            total_cost:
+              type: number
+              format: float
+              example: 2.03
+        partner_pricing:
+          type: object
+          properties:
+            recto_pages:
+              type: integer
+              example: 1
+            verso_pages:
+              type: integer
+              example: 0
+            total_pages:
+              type: integer
+              example: 1
+            total_sheets:
+              type: integer
+              example: 1
+            envelope_type:
+              type: string
+              enum: ['US', 'C4', 'C5']
+            recto_cost:
+              type: number
+              format: float
+              example: 0.01
+            verso_cost:
+              type: number
+              format: float
+              example: 0
+            print_cost:
+              type: number
+              format: float
+              example: 0.01
+            envelope_cost:
+              type: number
+              format: float
+              example: 0.05
+            address_carrier_cost:
+              type: number
+              format: float
+              example: 0.01
+            send_cost:
+              type: number
+              format: float
+              example: 1.93
+            prior_cost:
+              type: number
+              format: float
+              example: 0
+            registered_cost:
+              type: number
+              format: float
+              example: 0
+            total_cost:
+              type: number
+              format: float
+              example: 2.03
+    IntakeEstimateResponse:
+      type: object
+      properties:
+        estimate:
+          type: string
+          example: '2.13'
+        estimate_partner:
+          type: string
+          example: '2.03'
+    IntakeMultipart:
+      type: object
+      required: ['document[name]', 'document[contents]']
+      properties:
+        document[name]:
+          type: string
+          example: maindocument.pdf
+        document[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the document, currently only application/pdf is supported
+        document[contents]:
+          type: string
+          format: binary
+        document[multiplex]:
+          description: Print method - 1 for recto verso, 0 for recto
+          type: integer
+          enum:
+            - 0
+            - 1
+          default: 1
+        address[street]:
+          type: string
+          example: 'Interleuvenlaan'
+        address[houseNumber]:
+          type: integer
+          example: 50
+          description: Required if houseNumberAlpha is not present
+        address[houseNumberAlpha]:
+          type: string
+          example: '50'
+          description: Required if houseNumber is not present
+          default: ''
+        address[box]:
+          type: string
+          example: '0101'
+          default: ''
+        address[unstructuredStreetNumberBox]:
+          type: string
+          example: '30 b'
+          description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are NOT present.
+          default: ''
+        address[countryIso2]:
+          type: string
+          example: 'BE'
+          default: 'BE'
+          minLength: 2
+          maxLength: 2
+        address[zip]:
+          type: string
+          example: '3001'
+        address[municipality]:
+          type: string
+          example: 'Leuven'
+        address[company]:
+          type: string
+          example: 'Symeta Hybrid nv'
+      oneOf:
+          - type: object
+            properties:
+              address[firstname]:
+                type: string
+                example: 'John'
+              address[lastname]:
+                type: string
+                example: 'Doe'
+            required:
+              - address[firstname]
+              - address[lastname]
+            additionalProperties: false
+          - type: object
+            properties:
+              address[fullname]:
+                type: string
+                example: 'John Doe'
+            required:
+              - address[fullname]
+            additionalProperties: false
   requestBodies:
     Intake:
       description: Intake that needs to be created
@@ -165,6 +455,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Intake'
+    IntakeMultipart:
+      description: Multipart Intake that needs to be created
+      content:
+        multipart/form-data:
+          schema:
+            $ref: '#/components/schemas/IntakeMultipart'
   securitySchemes:
     bearerAuth:
       type: http
