@@ -128,6 +128,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IntakeShowResponse'
+      security:
+        - bearerAuth:
+            - read:intakes
+  /intake/delete/{id}:
+    post:
+      tags: [intake]
+      summary: Remove the specified Intake
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the Intake to delete
+        - in: path
+          name: hash
+          schema:
+            type: string
+            format: md5
+          required: true
+          description: MD5 hash of the specified Intake's zip code, as confirmation
+      responses:
+        '200':
+          description: OK - Intake was removed
+        '400':
+          description: Confirmation hash did not match
+        '403':
+          description: Forbidden - attempting to remove an Intake that does not belong to the authenticated user
+        '404':
+          description: Not Found - Intake file could not be found on our fileserver
+        '422':
+          description: Intake is currently being processed and cannot be deleted - try again at a later time
+      security:
+        - bearerAuth:
+            - delete:intakes
 components:
   schemas:
     Intake:
