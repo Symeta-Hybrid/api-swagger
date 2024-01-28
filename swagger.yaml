@@ -8,7 +8,7 @@ info:
   termsOfService: https://portal.mailitwize.be/terms-and-conditions
   contact:
     email: support@mailitwize.be
-  version: 1.4.0
+  version: 1.5.0
 servers:
   - url: https://api-test.mailitwize.be/api/v1
     description: UAT server, no printing
@@ -163,6 +163,57 @@ paths:
       security:
         - bearerAuth:
             - delete:intakes
+  /proof-of-delivery/{id}:
+    get:
+      tags: [pod]
+      summary: Request information about the POD for the specified Intake
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the Intake for which you want to get the POD info
+      responses:
+        '200':
+          description: OK - POD for Intake fetched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PodShowResponse'
+        '403':
+          description: Forbidden - attempting to get POD info for Intake that does not belong to the authenticated user
+        '404':
+          description: Not Found - Intake or POD not found
+      security:
+        - bearerAuth:
+            - read:proof-of-delivery
+  /proof-of-delivery/{id}/document:
+    post:
+      tags: [pod]
+      summary: Request the POD document for the specified Intake
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the Intake for which you want to get the POD document
+      responses:
+        '200':
+          description: OK - POD document for Intake fetched
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Forbidden - attempting to get POD document for Intake that does not belong to the authenticated user
+        '404':
+          description: Not Found - Intake or POD not found or POD document not yet available
+      security:
+        - bearerAuth:
+            - read:proof-of-delivery
 components:
   schemas:
     Intake:
@@ -757,6 +808,44 @@ components:
           type: string
           format: date
           example: '01/10/2022'
+    PodShowResponse:
+      type: object
+      properties:
+        podGuid:
+          type: string
+          format: guid
+        podBusinessKey:
+          type: string
+          example: miw2_
+        requestDateTime:
+          type: string
+          format: date-time
+          example: 2023-07-31T14:58:36+02:00
+        barcode:
+          type: string
+          example: 010541288500452621900128522499
+        deliveryStates:
+          type: array
+          items:
+            type: object
+            properties:
+              stateCode:
+                type: string
+                example: PodDownloadRequestPodInfoSucceeded
+              stateDisplaytext:
+                type: string
+                example: Pod download request, pod info succeeded
+              transitionDateTime:
+                type: string
+                format: date-time
+                example: 2023-08-01T10:00:00+02:00
+        documentInfo:
+          type: object
+          properties:
+            hasPodAvailable:
+              type: boolean
+            hasOriginalDocumentAvailable:
+              type: boolean
   requestBodies:
     Intake:
       description: Intake that needs to be created
