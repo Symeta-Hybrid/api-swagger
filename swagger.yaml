@@ -803,7 +803,7 @@ components:
           type: string
           example:
             - JJBEA2356412012365478896541
-            - 010541288500452621221234567890
+            - '010541288500452621221234567890'
         shipping_date:
           type: string
           format: date
