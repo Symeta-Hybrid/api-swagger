@@ -705,10 +705,7 @@ components:
           default: 'POST'
     IntakeBulk:
       type: object
-      required: [ 'document[name]', 'document[contents]', 'document[mime-type]',
-                  'address[coordinates][startX]', 'address[coordinates][startY]', 'address[coordinates][width]', 'address[coordinates][height]',
-                  'splitString[coordinates][startX]', 'splitString[coordinates][startY]', 'splitString[coordinates][width]', 'splitString[coordinates][height]',
-                  'hook[method]', 'hook[uri]', 'correlation[lang]']
+      required: [ 'document[name]', 'document[contents]', 'document[mime-type]', 'address[coordinates][startX]', 'address[coordinates][startY]', 'address[coordinates][width]', 'address[coordinates][height]', 'splitString[coordinates][startX]', 'splitString[coordinates][startY]', 'splitString[coordinates][width]', 'splitString[coordinates][height]', 'hook[method]', 'hook[uri]', 'correlation[lang]' ]
       properties:
         document[name]:
           type: string
