@@ -160,7 +160,7 @@ paths:
             type: integer
           required: true
           description: Numeric ID of the Intake to delete
-        - in: path
+        - in: query
           name: confirmation
           schema:
             type: string
@@ -322,26 +322,26 @@ components:
                 type: string
                 example: 'Symeta Hybrid nv'
             oneOf:
-                - type: object
-                  properties:
-                    firstname:
-                      type: string
-                      example: 'John'
-                    lastname:
-                      type: string
-                      example: 'Doe'
-                  required:
-                    - firstname
-                    - lastname
-                  additionalProperties: false
-                - type: object
-                  properties:
-                    fullname:
-                      type: string
-                      example: 'John Doe'
-                  required:
-                    - fullname
-                  additionalProperties: false
+              - type: object
+                properties:
+                  firstname:
+                    type: string
+                    example: 'John'
+                  lastname:
+                    type: string
+                    example: 'Doe'
+                required:
+                  - firstname
+                  - lastname
+                additionalProperties: false
+              - type: object
+                properties:
+                  fullname:
+                    type: string
+                    example: 'John Doe'
+                required:
+                  - fullname
+                additionalProperties: false
         envelope:
           type: object
           description: Custom envelope print
@@ -705,7 +705,7 @@ components:
           default: 'POST'
     IntakeBulk:
       type: object
-      required: [ 'document[name]', 'document[contents]', 'document[mime-type]', 'address[coordinates][startX]', 'address[coordinates][startY]', 'address[coordinates][width]', 'address[coordinates][height]', 'splitString[coordinates][startX]', 'splitString[coordinates][startY]', 'splitString[coordinates][width]', 'splitString[coordinates][height]', 'hook[method]', 'hook[uri]', 'correlation[lang]' ]
+      required: [ 'document[name]', 'document[contents]', 'document[mime-type]', 'address[coordinates][startX]', 'address[coordinates][startY]', 'address[coordinates][width]', 'address[coordinates][height]','splitString[coordinates][startX]', 'splitString[coordinates][startY]', 'splitString[coordinates][width]', 'splitString[coordinates][height]','hook[method]', 'hook[uri]', 'correlation[lang]']
       properties:
         document[name]:
           type: string
@@ -725,39 +725,30 @@ components:
         address[coordinates][startX]:
           description: Horizontal starting point of the address box, in pts
           type: integer
-          required: true
         address[coordinates][startY]:
           description: Vertical starting point of the address box, in pts
           type: integer
-          required: true
         address[coordinates][width]:
           description: Width of the address box, in pts
           type: integer
-          required: true
         address[coordinates][height]:
           description: Width of the address box, in pts
           type: integer
-          required: true
         splitString[coordinates][startX]:
           description: Horizontal starting point of the split string location, in pts
           type: integer
-          required: true
         splitString[coordinates][startY]:
           description: Horizontal starting point of the split string location, in pts
           type: integer
-          required: true
         splitString[coordinates][width]:
           description: Width of the split string location, in pts
           type: integer
-          required: true
         splitString[coordinates][height]:
           description: Height of the split string location, in pts
           type: integer
-          required: true
         splitString[text]:
           description: The unique text per recipient to split the PDF document on
           type: string
-          required: true
         attachments[0][name]:
           type: string
           example: attachment_1.pdf
