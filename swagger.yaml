@@ -8,7 +8,7 @@ info:
   termsOfService: https://portal.mailitwize.be/terms-and-conditions
   contact:
     email: support@mailitwize.be
-  version: 1.5.0
+  version: 1.5.1
 servers:
   - url: https://api-test.mailitwize.be/api/v1
     description: UAT server, no printing
@@ -84,6 +84,24 @@ paths:
       responses:
         '200':
           description: OK - multipart intake created
+      security:
+        - bearerAuth:
+            - write:intakes
+            - read:intakes
+  /intake/bulk:
+    post:
+      tags: [ intake ]
+      summary: Create a new multipart bulk intake
+      description: Create a new multipart bulk intake via form-data request
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IntakeBulk'
+      responses:
+        '200':
+          description: OK - bulk intake created
       security:
         - bearerAuth:
             - write:intakes
@@ -684,6 +702,134 @@ components:
         hook[method]:
           type: string
           enum: ['GET', 'POST']
+          default: 'POST'
+    IntakeBulk:
+      type: object
+      required: [ 'document[name]', 'document[contents]', 'document[mime-type]',
+                  'address[coordinates][startX]', 'address[coordinates][startY]', 'address[coordinates][width]', 'address[coordinates][height]',
+                  'splitString[coordinates][startX]', 'splitString[coordinates][startY]', 'splitString[coordinates][width]', 'splitString[coordinates][height]',
+                  'hook[method]', 'hook[uri]', 'correlation[lang]']
+      properties:
+        document[name]:
+          type: string
+          example: main-document.pdf
+        document[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the document, currently only application/pdf is supported
+        document[contents]:
+          type: string
+          format: binary
+        document[multiplex]:
+          description: Print method - 1 for recto verso, 0 for recto
+          type: integer
+          enum: [ 0, 1 ]
+          default: 1
+        address[coordinates][startX]:
+          description: Horizontal starting point of the address box, in pts
+          type: integer
+          required: true
+        address[coordinates][startY]:
+          description: Vertical starting point of the address box, in pts
+          type: integer
+          required: true
+        address[coordinates][width]:
+          description: Width of the address box, in pts
+          type: integer
+          required: true
+        address[coordinates][height]:
+          description: Width of the address box, in pts
+          type: integer
+          required: true
+        splitString[coordinates][startX]:
+          description: Horizontal starting point of the split string location, in pts
+          type: integer
+          required: true
+        splitString[coordinates][startY]:
+          description: Horizontal starting point of the split string location, in pts
+          type: integer
+          required: true
+        splitString[coordinates][width]:
+          description: Width of the split string location, in pts
+          type: integer
+          required: true
+        splitString[coordinates][height]:
+          description: Height of the split string location, in pts
+          type: integer
+          required: true
+        splitString[text]:
+          description: The unique text per recipient to split the PDF document on
+          type: string
+          required: true
+        attachments[0][name]:
+          type: string
+          example: attachment_1.pdf
+        attachments[0][mime-type]:
+          type: string
+          example: application/pdf
+        attachments[0][contents]:
+          type: string
+          format: binary
+        attachments[0][multiplex]:
+          type: integer
+          enum: [ 0, 1 ]
+        envelope[name]:
+          type: string
+          example: envelope.pdf
+        envelope[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the envelope, currently only application/pdf is supported
+        envelope[contents]:
+          type: string
+          format: binary
+        background[name]:
+          type: string
+          example: envelope.pdf
+        background[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the envelope, currently only application/pdf is supported
+        background[contents]:
+          type: string
+          format: binary
+        carrier[name]:
+          type: string
+          example: carrier.pdf
+        carrier[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the address carrier, currently only application/pdf is supported
+        carrier[contents]:
+          type: string
+          format: binary
+        postalService[registered]:
+          type: integer
+          enum: [ 0, 1 ]
+        postalService[prior]:
+          type: integer
+          enum: [ 0, 1 ]
+        postalService[nonPrior]:
+          type: integer
+          enum: [ 0, 1 ]
+          default: 1
+        correlation[costId]:
+          type: string
+          example: 'test'
+        correlation[lang]:
+          type: string
+          enum: [ 'nl', 'fr', 'en', 'de' ]
+        correlation[returnAddress]:
+          type: string
+          example: 'Interleuvenlaan 50, 3001 Leuven'
+          description: Will be printed on the envelope as return address in case the letter is undeliverable.
+        hook[uri]:
+          type: string
+          format: url
+          example: 'https://example.com/hooks/mailitwize'
+        hook[method]:
+          type: string
+          enum: [ 'GET', 'POST' ]
           default: 'POST'
     IntakeShowResponse:
       type: object
