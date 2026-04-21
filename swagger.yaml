@@ -717,18 +717,19 @@ components:
           type: integer
           enum: [ 0, 1 ]
           default: 1
-        attachments[0][name]:
+        recipient_identification_number:
           type: string
-          example: attachment_1.pdf
-        attachments[0][mime-type]:
+          description: 'National registration number of the recipient'
+          pattern: '^\d{11}$'
+        subject_nl:
           type: string
-          example: application/pdf
-        attachments[0][contents]:
+          description: 'Subject of the eBox message in Dutch'
+        subject_fr:
           type: string
-          format: binary
-        attachments[0][multiplex]:
-          type: integer
-          enum: [ 0, 1 ]
+          description: 'Subject of the eBox message in French'
+        subject_de:
+          type: string
+          description: 'Subject of the eBox message in German'
         address[firstname]:
           type: string
           example: John
@@ -777,10 +778,18 @@ components:
         address[company]:
           type: string
           example: 'Symeta Hybrid nv'
-        recipient_identification_number:
+        attachments[0][name]:
           type: string
-          description: 'National registration number of the recipient'
-          pattern: '^\d{11}$'
+          example: attachment_1.pdf
+        attachments[0][mime-type]:
+          type: string
+          example: application/pdf
+        attachments[0][contents]:
+          type: string
+          format: binary
+        attachments[0][multiplex]:
+          type: integer
+          enum: [ 0, 1 ]
         envelope[name]:
           type: string
           example: envelope.pdf
@@ -839,363 +848,174 @@ components:
           type: string
           enum: [ 'GET', 'POST' ]
           default: 'POST'
-    IntakeEboxEnterprise:
-      type: object
-      required: [ document, address, correlation, recipient_identification_number ]
-      properties:
-        document:
-          type: object
-          properties:
-            name:
-              type: string
-              example: 'maindocument.pdf'
-            mime-type:
-              description: MIME type of the document, currently only application/pdf is supported
-              type: string
-              example: 'application/pdf'
-            contents:
-              description: base64 encoded string of PDF contents
-              type: string
-              format: byte
-              example: JVBERi0xLjUKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURlY29kZT4+CnN0cmVhbQp4nDPQM1Qo5ypUMFAw0DMwslAwtTTVMzI3VbAwMdSzMDNUKErlCtdSyOMKVAAAtxIIrgplbmRzdHJlYW0KZW5kb2JqCgozIDAgb2JqCjUwCmVuZG9iagoKNSAwIG9iago8PAo+PgplbmRvYmoKCjYgMCBvYmoKPDwvRm9udCA1IDAgUgovUHJvY1NldFsvUERGL1RleHRdCj4+CmVuZG9iagoKMSAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDQgMCBSL1Jlc291cmNlcyA2IDAgUi9NZWRpYUJveFswIDAgNTk1LjMwMzkzNzAwNzg3NCA4NDEuODg5NzYzNzc5NTI4XS9Hcm91cDw8L1MvVHJhbnNwYXJlbmN5L0NTL0RldmljZVJHQi9JIHRydWU+Pi9Db250ZW50cyAyIDAgUj4+CmVuZG9iagoKNCAwIG9iago8PC9UeXBlL1BhZ2VzCi9SZXNvdXJjZXMgNiAwIFIKL01lZGlhQm94WyAwIDAgNTk1IDg0MSBdCi9LaWRzWyAxIDAgUiBdCi9Db3VudCAxPj4KZW5kb2JqCgo3IDAgb2JqCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyA0IDAgUgovT3BlbkFjdGlvblsxIDAgUiAvWFlaIG51bGwgbnVsbCAwXQovTGFuZyhubC1CRSkKPj4KZW5kb2JqCgo4IDAgb2JqCjw8L0NyZWF0b3I8RkVGRjAwNTcwMDcyMDA2OTAwNzQwMDY1MDA3Mj4KL1Byb2R1Y2VyPEZFRkYwMDRDMDA2OTAwNjIwMDcyMDA2NTAwNEYwMDY2MDA2NjAwNjkwMDYzMDA2NTAwMjAwMDM2MDAyRTAwMzM+Ci9DcmVhdGlvbkRhdGUoRDoyMDE5MTEyNTE3MjA0MSswMScwMCcpPj4KZW5kb2JqCgp4cmVmCjAgOQowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAyMzQgMDAwMDAgbiAKMDAwMDAwMDAxOSAwMDAwMCBuIAowMDAwMDAwMTQwIDAwMDAwIG4gCjAwMDAwMDA0MDIgMDAwMDAgbiAKMDAwMDAwMDE1OSAwMDAwMCBuIAowMDAwMDAwMTgxIDAwMDAwIG4gCjAwMDAwMDA1MDAgMDAwMDAgbiAKMDAwMDAwMDU5NiAwMDAwMCBuIAp0cmFpbGVyCjw8L1NpemUgOS9Sb290IDcgMCBSCi9JbmZvIDggMCBSCi9JRCBbIDw0QkUwOTAxQzI4MkQ2MzA5RkZCM0MxQTUyQTExQzQ0RD4KPDRCRTA5MDFDMjgyRDYzMDlGRkIzQzFBNTJBMTFDNDREPiBdCi9Eb2NDaGVja3N1bSAvNDlFRTFCRUI2QTBDODU3QkIxNTIxN0U2RTRCREI0MUQKPj4Kc3RhcnR4cmVmCjc3MAolJUVPRgo=
-            multiplex:
-              description: Print method - 1 for recto verso, 0 for recto
-              type: integer
-              enum: [ 0, 1 ]
-              default: 1
-        attachments:
-          type: object
-          properties:
-            '0':
-              type: object
-              properties:
-                name:
-                  type: string
-                  example: attachment.pdf
-                mime-type:
-                  type: string
-                  example: application/pdf
-                contents:
-                  type: string
-                  format: byte
-                  description: base64 encoded string of attachment PDF contents
-                multiplex:
-                  description: Print method - 1 for recto verso, 0 for recto
-                  type: integer
-                  enum: [ 0, 1 ]
-                  default: 1
-        address:
-          type: array
-          items:
-            type: object
-            properties:
-              street:
-                type: string
-                example: 'Interleuvenlaan'
-              houseNumber:
-                type: integer
-                example: 50
-                description: Required if houseNumberAlpha is **absent**
-              houseNumberAlpha:
-                type: string
-                example: '50'
-                description: Required if houseNumber is **absent**
-                default: ''
-              box:
-                type: string
-                example: '0101'
-                default: ''
-              unstructuredStreetNumberBox:
-                type: string
-                example: '30 b'
-                description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are **absent**.
-                default: ''
-              countryIso2:
-                type: string
-                example: 'BE'
-                default: 'BE'
-                minLength: 2
-                maxLength: 2
-              zip:
-                type: string
-                example: '3001'
-              municipality:
-                type: string
-                example: 'Leuven'
-              company:
-                type: string
-                example: 'Symeta Hybrid nv'
-            oneOf:
-              - type: object
-                properties:
-                  firstname:
-                    type: string
-                    example: 'John'
-                  lastname:
-                    type: string
-                    example: 'Doe'
-                required:
-                  - firstname
-                  - lastname
-                additionalProperties: false
-              - type: object
-                properties:
-                  fullname:
-                    type: string
-                    example: 'John Doe'
-                required:
-                  - fullname
-                additionalProperties: false
-        recipient_identification_number:
-          type: string
-          description: 'National registration number of the recipient'
-          pattern: '^\d{11}$'
-        envelope:
-          type: object
-          description: Custom envelope print
-          properties:
-            name:
-              description: Original name of the envelope document, including extension
-              type: string
-              example: 'envelope.pdf'
-            mime-type:
-              description: MIME type of the envelope, currently only application/pdf is supported
-              type: string
-              example: 'application/pdf'
-            contents:
-              description: base64 encoded string of PDF contents
-              type: string
-              format: byte
-        background:
-          nullable: true
-          type: object
-          description: Custom background to be printed on first page of main document
-          properties:
-            name:
-              description: Original name of the background document, including extension
-              type: string
-              example: 'background.pdf'
-            mime-type:
-              description: MIME type of the background, currently only application/pdf is supported
-              type: string
-              example: 'application/pdf'
-            contents:
-              description: base64 encoded string of PDF contents
-              type: string
-              format: byte
-        carrier:
-          nullable: true
-          type: object
-          description: Custom address carrier to be used for C4 envelopes
-          properties:
-            name:
-              description: Original name of the carrier document, including extension
-              type: string
-              example: 'carrier.pdf'
-            mime-type:
-              description: MIME type of the carrier, currently only application/pdf is supported
-              type: string
-              example: 'application/pdf'
-            contents:
-              description: base64 encoded string of PDF contents
-              type: string
-              format: byte
-        postalService:
-          type: array
-          items:
-            type: object
-            properties:
-              registered:
-                type: integer
-                enum: [ 0, 1 ]
-                default: 0
-              prior:
-                type: integer
-                enum: [ 0, 1 ]
-                default: 0
-              nonPrior:
-                type: integer
-                enum: [ 0, 1 ]
-                default: 1
-        correlation:
-          type: array
-          items:
-            type: object
-            properties:
-              costId:
-                type: string
-                example: 'test'
-              lang:
-                type: string
-                enum: [ 'nl', 'fr', 'en', 'de' ]
-              returnAddress:
-                type: string
-                example: 'Interleuvenlaan 50, 3001 Leuven'
-                description: Will be printed on the envelope as return address in case the letter is undeliverable.
-        hook:
-          type: array
-          items:
-            type: object
-            properties:
-              uri:
-                type: string
-                format: url
-                example: 'https://example.com/hooks/mailitwize'
-              method:
-                type: string
-                enum: [ 'GET', 'POST' ]
-                default: 'POST'
         hook_uri:
           type: string
           format: url
-          example: 'https://example.com/hooks/mailitwize-ebox'
-          description: 'Separate webhook endpoint for eBox status updates'
+          example: 'https://example.com/hook/mailitwize_ebox'
+          description: Separate URL for eBox message status updates
         hook_method:
           type: string
           enum: [ 'GET', 'POST' ]
           default: 'POST'
-          description: 'Method for the eBox-specific webhooks'
     IntakeEboxEnterpriseMultipart:
-            type: object
-            required: [ 'document[name]', 'document[contents]', 'correlation[lang]', 'recipient_identification_number' ]
-            properties:
-              document[name]:
-                type: string
-                example: maindocument.pdf
-              document[mime-type]:
-                type: string
-                example: application/pdf
-                description: MIME type of the document, currently only application/pdf is supported
-              document[contents]:
-                type: string
-                format: binary
-              document[multiplex]:
-                description: Print method - 1 for recto verso, 0 for recto
-                type: integer
-                enum: [ 0, 1 ]
-                default: 1
-              attachments[0][name]:
-                type: string
-                example: attachment_1.pdf
-              attachments[0][mime-type]:
-                type: string
-                example: application/pdf
-              attachments[0][contents]:
-                type: string
-                format: binary
-              attachments[0][multiplex]:
-                type: integer
-                enum: [ 0, 1 ]
-              address[firstname]:
-                type: string
-                example: John
-                description: Only allowed if fullname is **absent**
-              address[lastname]:
-                type: string
-                example: Doe
-                description: Only allowed if fullname is **absent**
-              address[fullname]:
-                type: string
-                example: John Doe
-                description: Only allowed if firstname **and** lastname are **absent**
-              address[street]:
-                type: string
-                example: 'Interleuvenlaan'
-              address[houseNumber]:
-                type: integer
-                example: 50
-                description: Required if houseNumberAlpha is **absent**
-              address[houseNumberAlpha]:
-                type: string
-                example: '50'
-                description: Required if houseNumber is **absent**
-                default: ''
-              address[box]:
-                type: string
-                example: '0101'
-                default: ''
-              address[unstructuredStreetNumberBox]:
-                type: string
-                example: '30 b'
-                description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are **absent**.
-                default: ''
-              address[countryIso2]:
-                type: string
-                example: 'BE'
-                default: 'BE'
-                minLength: 2
-                maxLength: 2
-              address[zip]:
-                type: string
-                example: '3001'
-              address[municipality]:
-                type: string
-                example: 'Leuven'
-              address[company]:
-                type: string
-                example: 'Symeta Hybrid nv'
-              recipient_identification_number:
-                type: string
-                description: 'National registration number of the recipient'
-                pattern: '^\d{11}$'
-              envelope[name]:
-                type: string
-                example: envelope.pdf
-              envelope[mime-type]:
-                type: string
-                example: application/pdf
-                description: MIME type of the envelope, currently only application/pdf is supported
-              envelope[contents]:
-                type: string
-                format: binary
-              background[name]:
-                type: string
-                example: envelope.pdf
-              background[mime-type]:
-                type: string
-                example: application/pdf
-                description: MIME type of the envelope, currently only application/pdf is supported
-              background[contents]:
-                type: string
-                format: binary
-              carrier[name]:
-                type: string
-                example: carrier.pdf
-              carrier[mime-type]:
-                type: string
-                example: application/pdf
-                description: MIME type of the address carrier, currently only application/pdf is supported
-              carrier[contents]:
-                type: string
-                format: binary
-              postalService[registered]:
-                type: integer
-                enum: [ 0, 1 ]
-              postalService[prior]:
-                type: integer
-                enum: [ 0, 1 ]
-              postalService[nonPrior]:
-                type: integer
-                enum: [ 0, 1 ]
-                default: 1
-              correlation[costId]:
-                type: string
-                example: 'test'
-              correlation[lang]:
-                type: string
-                enum: [ 'nl', 'fr', 'en', 'de' ]
-              correlation[returnAddress]:
-                type: string
-                example: 'Interleuvenlaan 50, 3001 Leuven'
-                description: Will be printed on the envelope as return address in case the letter is undeliverable.
-              hook[uri]:
-                type: string
-                format: url
-                example: 'https://example.com/hooks/mailitwize'
-              hook[method]:
-                type: string
-                enum: [ 'GET', 'POST' ]
-                default: 'POST'
+      type: object
+      required: [ 'document[name]', 'document[contents]', 'correlation[lang]', 'recipient_identification_number' ]
+      properties:
+        document[name]:
+          type: string
+          example: maindocument.pdf
+        document[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the document, currently only application/pdf is supported
+        document[contents]:
+          type: string
+          format: binary
+        document[multiplex]:
+          description: Print method - 1 for recto verso, 0 for recto
+          type: integer
+          enum: [ 0, 1 ]
+          default: 1
+        recipient_identification_number:
+          type: string
+          description: 'Company registration number of the recipient organisation'
+          pattern: '^\d{10}$'
+        subject_nl:
+          type: string
+          description: 'Subject of the eBox message in Dutch'
+        subject_fr:
+          type: string
+          description: 'Subject of the eBox message in French'
+        subject_de:
+          type: string
+          description: 'Subject of the eBox message in German'
+        address[firstname]:
+          type: string
+          example: John
+          description: Only allowed if fullname is **absent**
+        address[lastname]:
+          type: string
+          example: Doe
+          description: Only allowed if fullname is **absent**
+        address[fullname]:
+          type: string
+          example: John Doe
+          description: Only allowed if firstname **and** lastname are **absent**
+        address[street]:
+          type: string
+          example: 'Interleuvenlaan'
+        address[houseNumber]:
+          type: integer
+          example: 50
+          description: Required if houseNumberAlpha is **absent**
+        address[houseNumberAlpha]:
+          type: string
+          example: '50'
+          description: Required if houseNumber is **absent**
+          default: ''
+        address[box]:
+          type: string
+          example: '0101'
+          default: ''
+        address[unstructuredStreetNumberBox]:
+          type: string
+          example: '30 b'
+          description: Combination of houseNumber and box if separate properties are unavailable. Only allowed if [street, houseNumber, box] are **absent**.
+          default: ''
+        address[countryIso2]:
+          type: string
+          example: 'BE'
+          default: 'BE'
+          minLength: 2
+          maxLength: 2
+        address[zip]:
+          type: string
+          example: '3001'
+        address[municipality]:
+          type: string
+          example: 'Leuven'
+        address[company]:
+          type: string
+          example: 'Symeta Hybrid nv'
+        attachments[0][name]:
+          type: string
+          example: attachment_1.pdf
+        attachments[0][mime-type]:
+          type: string
+          example: application/pdf
+        attachments[0][contents]:
+          type: string
+          format: binary
+        attachments[0][multiplex]:
+          type: integer
+          enum: [ 0, 1 ]
+        envelope[name]:
+          type: string
+          example: envelope.pdf
+        envelope[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the envelope, currently only application/pdf is supported
+        envelope[contents]:
+          type: string
+          format: binary
+        background[name]:
+          type: string
+          example: envelope.pdf
+        background[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the envelope, currently only application/pdf is supported
+        background[contents]:
+          type: string
+          format: binary
+        carrier[name]:
+          type: string
+          example: carrier.pdf
+        carrier[mime-type]:
+          type: string
+          example: application/pdf
+          description: MIME type of the address carrier, currently only application/pdf is supported
+        carrier[contents]:
+          type: string
+          format: binary
+        postalService[registered]:
+          type: integer
+          enum: [ 0, 1 ]
+        postalService[prior]:
+          type: integer
+          enum: [ 0, 1 ]
+        postalService[nonPrior]:
+          type: integer
+          enum: [ 0, 1 ]
+          default: 1
+        correlation[costId]:
+          type: string
+          example: 'test'
+        correlation[lang]:
+          type: string
+          enum: [ 'nl', 'fr', 'en', 'de' ]
+        correlation[returnAddress]:
+          type: string
+          example: 'Interleuvenlaan 50, 3001 Leuven'
+          description: Will be printed on the envelope as return address in case the letter is undeliverable.
+        hook[uri]:
+          type: string
+          format: url
+          example: 'https://example.com/hooks/mailitwize'
+        hook[method]:
+          type: string
+          enum: [ 'GET', 'POST' ]
+          default: 'POST'
+        hook_uri:
+          type: string
+          format: url
+          example: 'https://example.com/hook/mailitwize_ebox'
+          description: Separate URL for eBox message status updates
+        hook_method:
+          type: string
+          enum: [ 'GET', 'POST' ]
+          default: 'POST'
     IntakeResponse:
       type: object
       properties:
