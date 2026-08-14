@@ -172,6 +172,52 @@ paths:
       security:
         - bearerAuth:
             - write:estimate
+  /intake/preview/{id}:
+    get:
+      tags: [intake]
+      summary: Preview the generated PDF mailpack for the specified Intake
+      description: |-
+        Returns the generated mailpack PDF for the Intake. Send an `Accept: application/pdf` header to receive the raw PDF file; otherwise a JSON summary is returned, including the PDF as base64.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the Intake to preview
+        - in: header
+          name: Accept
+          schema:
+            type: string
+            enum: ['application/pdf', 'application/json']
+            default: 'application/json'
+          required: false
+          description: |-
+            Set to `application/pdf` to receive the raw PDF file directly. Any other value (or omitting the header) returns a JSON summary with the PDF embedded as base64.
+      responses:
+        '200':
+          description: OK - Intake PDF fetched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntakePreviewResponse'
+              example:
+                attachmentPages: 2
+                documentPages: 1
+                totalPages: 3
+                previewBase64: 'JVBERi0xLjQKJeLjz9MK...'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+              example: '%PDF-1.4 ...'
+        '403':
+          description: Forbidden - Intake does not belong to the authenticated user
+        '404':
+          description: Not Found - Intake file could not be found on our fileserver, it may still be processing
+      security:
+        - bearerAuth:
+            - read:intakes
   /intake/show/{id}:
     get:
       tags: [intake]
@@ -1434,6 +1480,25 @@ components:
           type: string
           enum: [ 'GET', 'POST' ]
           default: 'POST'
+    IntakePreviewResponse:
+      type: object
+      properties:
+        attachmentPages:
+          type: integer
+          example: 2
+          description: Total number of pages across all attachments
+        documentPages:
+          type: integer
+          example: 1
+          description: Number of pages of the main document
+        totalPages:
+          type: integer
+          example: 3
+          description: Total number of pages in the generated mailpack PDF
+        previewBase64:
+          type: string
+          format: byte
+          description: Base64-encoded mailpack PDF
     IntakeShowResponse:
       type: object
       properties:
